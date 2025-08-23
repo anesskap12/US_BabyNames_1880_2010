@@ -1,0 +1,153 @@
+# US_BabyNames_1880_2010
+evolution of female and male baby names in the us from 1880 to 2010
+this data Analysis projects aims to analyse some aspects of the evolution of the us baby names in the period going from 1880 to 2010
+with this DataSet we can do a lot of things:
+-Visualize the proportion of babies given a particular name (your own, or another name) over time
+
+-Determine the relative rank of a name
+
+-Determine the most popular names in each year or the names whose popularity has advanced or declined the most
+
+-Analyze trends in names: vowels, consonants, length, overall diversity, changes in
+spelling, first and last letters
+
+-Analyze external sources of trends: biblical names, celebrities, demographics
+
+###Data Sources 
+
+The united states social security Administration(ssa) [download here]([https://github.com/wesm/pydata-book](https://github.com/wesm/pydata-book/tree/3rd-edition/datasets/babynames))
+
+###Tools
+
+Python,pandas , matplotlib, numpy
+
+###Data Wrangling and Preparation
+
+.1The data is already in coma separated value so we can just load the data using pandasead_csv to load the files as a DataFrame, but since the data is split in multiple files, we need to assemble the whole
+  data in one DataFrame this will be done using the pandas.concat, also we create a columns for the years
+  to do so i created a list i called pieces, then i create a loop for year in range(1880-2011), this loop reads as a csv each file
+  each file of the data and puts it as a dataframe with the columns indicated in the code, then we create a column for the years  and we append each frame in the
+  pieces list after this we concate all the pieces while ignoring the index because we'are not interested in the original index of each file
+  ```python
+  pieces=[]
+for year in range(1880,2010):
+    path= f"babynames/yob{year}.txt"
+    frame=pd.read_csv(path,names=["names","sex","births"])
+    frame["year"] = year
+    pieces.append(frame)
+names = pd.concat(pieces, ignore_index=True)
+```
+
+.2 i then add a column to indicate the percentage of the each name relative to the total population names but i don't want a global percentage that dosent take account of the year and the sex 
+  so i parse in a function to calculate the percentage in regards of the year and the sex, after this a sanity check is done to ensure that the sum of props is equal to one,
+  ```python
+def add_prop(group):
+  group["prop"] = group["births"] / group["births"].sum()
+  return group
+names=names.groupby(["year","sex"]).apply(add_prop)
+names = names.reset_index(drop=True)
+#the verification of the sum of the rates is done using the next line :
+names.groupby(["year","sex"])["prop"].sum()
+```
+
+.3 the third step would be the extraction of a subset equivalent to the top 1000 names in the sex/year combination 
+```python
+  def get_top1000(groupe):
+    return group.sort_values("births",ascending=False)[:1000]
+grouped = names.groupby(["year", "sex"])
+top1000 = grouped.apply(get_top1000)
+```
+###Data Analysis : Analysing Naming Trends
+.1 First of i start of by creating two subdatas one for the boys and one for the girls, then using the pivot methode :
+```python
+total_births = top1000.pivot_table("births", index="year",
+.....: columns="name",
+.....: aggfunc=sum)
+```
+after that i plot the evolution of the use of the four names john,harry,marry,marylin from the 1880 to 2010
+2.Analysing the increase in the naming diversity across the years
+  one of the most intriguing things about naming is the change that occured in the number of the unique names used as time goes on
+  One measure is the proportion of births represented by the top 1,000 most popular names
+  ```python
+  table = top1000.pivot_table("prop", index="year",columns="sex", aggfunc=sum)
+  table.plot(title="Sum of table1000.prop by year and sex", yticks=np.linspace(0, 1.2, 13))
+  ```
+  Another interesting metric is the number
+  of distinct names, taken in order of popularity from highest to lowest, in the top 50%
+  of births. This number is trickier to compute. Let’s consider just the boys names from 2010
+  i take a substrata of the boys names of the year 2009, and then using the searchsorted(0.5)
+  then i apply the same process on the year 1900 in order to compare both year
+```python
+df = boys[boys.year == 1900]
+in1900 = df.sort_values("prop", ascending=False).prop.cumsum()
+in1900.searchsorted(0.5) + 1
+```
+  the results show that in order to reach 50% of the names used in 1900 we only needed 25 names, on the other hand to reach the same percentage in the 2009 we need 113 name
+  You can now apply this operation to each year/sex combination, groupby those fields,
+  and apply a function returning the count for each group:
+ ```python
+  def get_quantile_count(group, q=0.5):
+    group = group.sort_values("prop", ascending=False)
+    return group.prop.cumsum().searchsorted(q) + 1
+  diversity = top1000.groupby(["year", "sex"]).apply(get_quantile_count)
+  diversity = diversity.unstack()
+  diversity.plot(title="Number of popular names in top 50%")
+```
+the resulting plot would be :
+figure 1 : diversity plot
+<img width="792" height="522" alt="Capture" src="https://github.com/user-attachments/assets/c9e55e76-67eb-4130-b6ea-7c1394c03179" />
+as we can see the the diversity increased overtime, but we can also see that the girls names have always been more diverse than those of the boys
+and even the rate of evolution is far bigger then it's counterpart
+
+3.Analysing the evolution of the last letter
+
+we start of by a function that takes the last letter of each name :
+```python
+def get_last_letter(x):
+    return x[-1]
+last_letters = names["names"].map(get_last_letter)
+last_letters.name="last_letter"
+```
+
+then we pivot the table to get the number of last letters by sex and by years, and we reduce the table's year to only get three representative years of our revolution
+```python
+table = names.pivot_table("births", index=last_letters,columns=["sex", "year"], aggfunc=sum)
+subtable = table.reindex(columns=[1910, 1960, 2009], level="year")
+```
+after getting the number of each last letter in each of 1910,1960 and 2009, i then normalize by the total births per year and sex to compute a new table containing the
+proportion of total births for each sex ending in each letter
+```python
+subtable.sum()
+letter_prop = subtable / subtable.sum()
+```
+  figure 2 : proportion of boy and girl names ending in each letter
+  <img width="792" height="658" alt="Capture2" src="https://github.com/user-attachments/assets/a2ec426c-900a-404d-9a89-465865bca995" />
+  
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
