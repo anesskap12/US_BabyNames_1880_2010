@@ -1,8 +1,11 @@
-# US_BabyNames_1880_2010
-evolution of female and male baby names in the us from 1880 to 2010
+# US_BabyNames_1880_2010 Analysis
+
+### Introduction
+the data between our hands in this project is the evolution of female and male baby names in the united states from 1880 to 2010
 this data Analysis projects aims to analyse some aspects of the evolution of the us baby names in the period going from 1880 to 2010
-with this DataSet we can do a lot of things:
--Visualize the proportion of babies given a particular name (your own, or another name) over time
+a lot can be done using this data,we can for example:
+
+-Visualize the proportion of babies given a particular name over time
 
 -Determine the relative rank of a name
 
@@ -13,7 +16,14 @@ spelling, first and last letters
 
 -Analyze external sources of trends: biblical names, celebrities, demographics
 
-###Data Sources 
+### Table of contents
+-[Data Sources](#data-sources)
+
+-[Data Wrangling and Preparation](#data-wrangling-and-preparation)
+
+-[Analysing Naming Trends](#analysing-naming-trends)
+
+### Data Sources 
 
 The united states social security Administration(ssa) [download here]([https://github.com/wesm/pydata-book](https://github.com/wesm/pydata-book/tree/3rd-edition/datasets/babynames))
 
@@ -21,7 +31,7 @@ The united states social security Administration(ssa) [download here]([https://g
 
 Python,pandas , matplotlib, numpy
 
-###Data Wrangling and Preparation
+### Data Wrangling and Preparation
 
 .1The data is already in coma separated value so we can just load the data using pandasead_csv to load the files as a DataFrame, but since the data is split in multiple files, we need to assemble the whole
   data in one DataFrame this will be done using the pandas.concat, also we create a columns for the years
@@ -57,7 +67,8 @@ names.groupby(["year","sex"])["prop"].sum()
 grouped = names.groupby(["year", "sex"])
 top1000 = grouped.apply(get_top1000)
 ```
-###Data Analysis : Analysing Naming Trends
+### Analysing Naming Trends
+
 .1 First of i start of by creating two subdatas one for the boys and one for the girls, then using the pivot methode :
 ```python
 total_births = top1000.pivot_table("births", index="year",
@@ -65,7 +76,7 @@ total_births = top1000.pivot_table("births", index="year",
 .....: aggfunc=sum)
 ```
 after that i plot the evolution of the use of the four names john,harry,marry,marylin from the 1880 to 2010
-2.Analysing the increase in the naming diversity across the years
+2. Analysing the increase in the naming diversity across the years
   one of the most intriguing things about naming is the change that occured in the number of the unique names used as time goes on
   One measure is the proportion of births represented by the top 1,000 most popular names
   ```python
@@ -99,7 +110,7 @@ figure 1 : diversity plot
 as we can see the the diversity increased overtime, but we can also see that the girls names have always been more diverse than those of the boys
 and even the rate of evolution is far bigger then it's counterpart
 
-3.Analysing the evolution of the last letter
+3. Analysing the evolution of the last letter
 
 we start of by a function that takes the last letter of each name :
 ```python
@@ -122,16 +133,41 @@ letter_prop = subtable / subtable.sum()
 ```
   figure 2 : proportion of boy and girl names ending in each letter
   <img width="792" height="658" alt="Capture2" src="https://github.com/user-attachments/assets/a2ec426c-900a-404d-9a89-465865bca995" />
+
+  then again i normalize by year and sex by dividing the each value in the table by the sum of course the values are grouped by year and sex which i stressed before,after that i select a subset of letters for     the boy names,("d", "n", "y"), finally transposing to make each column a time series:
+  ```python
+  letter_prop = table / table.sum()
+  dny_ts = letter_prop.loc[["d", "n", "y"], "M"].T
+  dny_ts.plot()
+  ```
+  figure 3 : evolution of the proportion of names ending with "d","n","y :
   
+  <img width="696" height="540" alt="c3" src="https://github.com/user-attachments/assets/1deb03d3-3bc6-4fc6-8b5a-74c3331afa04" />
 
 
-
+  4. Boy names that became girl names
+  one of the names that were used for boys and became after a century mostly used for girls is the name lesly and it's variations(leslie,lesley...)
+  so i start of by creating a time serie that contains all the names, without a repetition using the unique(), then  i substract the ones containing "Lesl"
+  
+  ```python
+  all_names = pd.Series(top1000["names"].unique())
+  lesley_like = all_names[all_names.str.contains("Lesl")]
+  ```
+  after that i used the generated lesley likes names to  filter down to just those names and sum births grouped by name to see the relative frequencies, also i pivot by the 
+  years and the sex because thos are two are what matters to us, as we are looking into the change that occured in the use of those names for boys and girls,then i did divide by the sum of the two columns 
+  in each year to get the percentage of use for each sex, so i can finally get a plot that shows the evolution of the use of the lesley-like name for boys and girls.
+  ```python
+  filtered = top1000[top1000["names"].isin(lesley_like)]
+  filtered.groupby("names")["births"].sum()
+  table = filtered.pivot_table("births", index="year",columns="sex", aggfunc="sum")
+  table = table.div(table.sum(axis="columns"), axis="index")
+  table.plot(style={"M": "k-", "F": "k--"})
+  ```
+  figure 4 : Proportion of male/female Lesley-like names over time
+  
+  <img width="784" height="489" alt="C4" src="https://github.com/user-attachments/assets/9617b9af-7173-492d-8b91-601934e5d3fc" />
 
   
-
-
-
-
 
 
 
