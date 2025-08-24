@@ -61,21 +61,24 @@ names.groupby(["year","sex"])["prop"].sum()
 
 .3 the third step would be the extraction of a subset equivalent to the top 1000 names in the sex/year combination 
 ```python
-  def get_top1000(groupe):
-    return group.sort_values("births",ascending=False)[:1000]
-grouped = names.groupby(["year", "sex"])
-top1000 = grouped.apply(get_top1000)
+  top1000 = (
+    names.sort_values(by=["year", "sex", "births"], ascending=[True, True, False])
+    .groupby(["year", "sex"])
+    .head(1000)
+)
 ```
 ### Analysing Naming Trends
 
-.1 First of i start of by creating two subdatas one for the boys and one for the girls, then using the pivot methode :
+.1 i start of by creating two subdatasets one for the boys and one for the girls, then using the pivot methode :
 ```python
 total_births = top1000.pivot_table("births", index="year",
 .....: columns="name",
 .....: aggfunc=sum)
 ```
-after that i plot the evolution of the use of the four names john,harry,marry,marylin from the 1880 to 2010
-2. Analysing the increase in the naming diversity across the years
+the resulting table is the number of births for each name in each year, this table gives us the possibility to plot the evolution of any name we want as long as it exists in the table, in this case i did a plotting for the names :(john, Harry, Mary, Marilyn)
+
+
+2. Analysing the increase in the naming diversity across the years.
   one of the most intriguing things about naming is the change that occured in the number of the unique names used as time goes on
   One measure is the proportion of births represented by the top 1,000 most popular names
   ```python
