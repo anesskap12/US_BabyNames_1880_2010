@@ -33,7 +33,7 @@ Python,pandas , matplotlib, numpy
 
 ### Data Wrangling and Preparation
 
-.1The data is already in coma separated value so we can just load the data using pandasead_csv to load the files as a DataFrame, but since the data is split in multiple files, we need to assemble the whole
+.1 The data is already in coma separated value so we can just load the data using pandasead_csv to load the files as a DataFrame, but since the data is split in     multiple files, we need to assemble the whole
   data in one DataFrame this will be done using the pandas.concat, also we create a columns for the years
   to do so i created a list i called pieces, then i create a loop for year in range(1880-2011), this loop reads as a csv each file
   each file of the data and puts it as a dataframe with the columns indicated in the code, then we create a column for the years  and we append each frame in the
@@ -48,8 +48,7 @@ for year in range(1880,2010):
 names = pd.concat(pieces, ignore_index=True)
 ```
 
-.2 i then add a column to indicate the percentage of the each name relative to the total population names but i don't want a global percentage that dosent take account of the year and the sex 
-  so i parse in a function to calculate the percentage in regards of the year and the sex, after this a sanity check is done to ensure that the sum of props is equal to one,
+.2  i then add a column to indicate the percentage of the each name relative to the total population names but i don't want a global percentage that dosent take       account of the year and the sex so i parse in a function to calculate the percentage in regards of the year and the sex,fter this a sanity check is done to        ensure that the sum of props is equal to one,    
   ```python
 def add_prop(group):
   group["prop"] = group["births"] / group["births"].sum()
